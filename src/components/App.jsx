@@ -1,5 +1,4 @@
 import { Component } from 'react';
-// import { nanoid } from 'nanoid';
 import ContactList from './ContactList/ContactList';
 import Form from './Form/Form';
 import Filter from './Filter/Filter';
@@ -18,13 +17,14 @@ export class App extends Component {
   };
 
   addContact = contact => {
-    this.state.contacts.find(e => e.name === contact.name)
+    this.state.contacts.find(
+      e => e.name.toLowerCase() === contact.name.toLowerCase()
+    )
       ? alert(`${contact.name} is already in contacts`)
       : this.setState(prevState => ({
           contacts: [contact, ...prevState.contacts],
         }));
   };
-
 
   handleFilter = event => {
     this.setState({ filter: event.currentTarget.value });
@@ -42,6 +42,22 @@ export class App extends Component {
     });
   };
 
+  componentDidMount() {
+    const contacts = localStorage.getItem('contacts');
+    const parsedContacts = JSON.parse(contacts);
+
+    if (parsedContacts) {
+      this.setState({ contacts: parsedContacts });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.contacts !== prevState.contacts) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+      // console.log('обновились контакты')
+    }
+  }
+
   render() {
     const filteredContacts = this.getFilteredContacts();
     return (
@@ -50,7 +66,14 @@ export class App extends Component {
         <Form onSubmit={this.addContact} />
         <h2 className={css.title}>Contacts</h2>
         <Filter value={this.state.filter} setFilter={this.handleFilter} />
-        <ContactList contacts={filteredContacts} onClick={this.handleDelete} />
+        {this.state.contacts.length === 0 ? (
+          <p className={css.message}>There are no contacts in the Phonebook</p>
+        ) : (
+          <ContactList
+            contacts={filteredContacts}
+            onClick={this.handleDelete}
+          />
+        )}
       </>
     );
   }
